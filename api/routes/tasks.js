@@ -32,8 +32,7 @@ tasksRouter.post(
   async (req, res, next) => {
     try {
       const { id } = req.user;
-      const { title } = req.body;
-      const done = req.body.done.toLowerCase() === "true";
+      const { title, done } = req.body;
 
       const task = await createTask(title, id, done);
       res.status(201).send(task);
@@ -50,8 +49,7 @@ tasksRouter.put(
   async (req, res, next) => {
     try {
       const { id } = req.params;
-      const { title } = req.body;
-      const done = req.body.done.toLowerCase() === "true";
+      const { title, done } = req.body;
       const userId = req.user.id;
 
       const task = await updateTaskByIdAndUserId(title, done, id, userId);
