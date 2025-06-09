@@ -3,9 +3,10 @@ import getUserFromToken from "#middleware/getUserFromToken";
 import requireUser from "#middleware/requireUser";
 import {
   createTask,
-  deleteTaskByIdAndUserId,
+  deleteTaskById,
+  getTaskById,
   getTasksByUserId,
-  updateTaskByIdAndUserId,
+  updateTaskById,
 } from "#db/queries/tasks";
 import requireBody from "#middleware/requireBody";
 
@@ -42,22 +43,31 @@ tasksRouter.post(
   }
 );
 
-// PUT /tasks
+// middleware for any route that includes id
+// check if the task exists, and if it belongs to the logged in user
+tasksRouter.param("id", async (req, res, next, id) => {
+  const userId = req.user.id;
+  const task = await getTaskById(id);
+
+  if (!task) return res.status(404).send("Error: task not found.");
+  if (task.user_id !== userId) {
+    return res.status(403).send("Error: you do not have access to this task.");
+  }
+
+  req.task = task;
+  next();
+});
+
+// PUT /tasks/:id
 tasksRouter.put(
   "/:id",
   requireBody(["title", "done"]),
   async (req, res, next) => {
     try {
-      const { id } = req.params;
+      const { id } = req.task;
       const { title, done } = req.body;
-      const userId = req.user.id;
 
-      const task = await updateTaskByIdAndUserId(title, done, id, userId);
-      if (!task)
-        return res
-          .status(403)
-          .send("Error: you do not have access to this task.");
-
+      const task = await updateTaskById(title, done, id);
       res.send(task);
     } catch (error) {
       next(error);
@@ -65,18 +75,12 @@ tasksRouter.put(
   }
 );
 
-// DELETE /tasks
+// DELETE /tasks/:id
 tasksRouter.delete("/:id", async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const userId = req.user.id;
+    const { id } = req.task;
 
-    const deletedTask = await deleteTaskByIdAndUserId(id, userId);
-    if (!deletedTask)
-      return res
-        .status(403)
-        .send("Error: you do not have access to this task.");
-
+    await deleteTaskById(id);
     // 204 No Content means “success with no response body”
     res.sendStatus(204);
   } catch (error) {
