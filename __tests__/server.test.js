@@ -27,7 +27,7 @@ describe("/users router", () => {
       const {
         rows: [user],
       } = await db.query(
-        "SELECT password FROM users WHERE username = 'tasktesttask'",
+        "SELECT password FROM users WHERE username = 'tasktesttask'"
       );
       expect(user.password).not.toBe("password");
     });
@@ -111,7 +111,7 @@ describe("/tasks router", () => {
         .set("Authorization", `Bearer ${token}`);
       expect(response.status).toBe(200);
       expect(response.body).toEqual(
-        expect.arrayContaining([expect.objectContaining(task)]),
+        expect.arrayContaining([expect.objectContaining(task)])
       );
     });
   });
